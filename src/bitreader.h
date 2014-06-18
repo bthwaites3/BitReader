@@ -15,7 +15,8 @@ public:
 	void open(char* filename);
 	void reset();
 
-	T read(unsigned int length);
+	int read(unsigned int length);
+	void seek(unsigned int position);
 
 private:
 	FILE* ptr;
@@ -24,4 +25,6 @@ private:
 	T currentChunk;
 
 	int is_big_endian(void);
+	T read_single(unsigned int length);
+
 };

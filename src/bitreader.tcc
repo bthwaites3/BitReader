@@ -17,6 +17,12 @@ void bitreader<T>::open(char* filename)
 	fread(&currentChunk, sizeof(T), 1, ptr);
 }
 
+// This is basically a wrapper for the read_single function
+template <class T>
+int bitreader<T>::read(unsigned int length)
+{
+	int elementsRequested = (sizeof(T) * 8) / length;
+}
 
 template <class T>
 void bitreader<T>::reset()
@@ -25,10 +31,28 @@ void bitreader<T>::reset()
 	fseek(ptr, 0, SEEK_SET);
 }
 
+
+template <class T>
+void bitreader<T>::seek(unsigned int position)
+{
+
+}
+
+template <class T>
+int bitreader<T>::is_big_endian(void)
+{
+    union {
+        uint32_t i;
+        char c[4];
+    } bint = {0x01020304};
+
+    return bint.c[0] == 1; 
+}
+
 //Read bits into the buffer. Length is the desired number of bits.
 //Right now limit the buffer to one T.
 template <class T>
-T bitreader<T>::read(unsigned int length)
+T bitreader<T>::read_single(unsigned int length)
 {
 	T retChunk = currentChunk;
 	unsigned int numBits = sizeof(T) * 8;
@@ -70,13 +94,3 @@ T bitreader<T>::read(unsigned int length)
 	return retChunk;
 }
 
-template <class T>
-int bitreader<T>::is_big_endian(void)
-{
-    union {
-        uint32_t i;
-        char c[4];
-    } bint = {0x01020304};
-
-    return bint.c[0] == 1; 
-}
