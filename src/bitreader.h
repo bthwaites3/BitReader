@@ -1,11 +1,10 @@
 #pragma once
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <iostream>
 #include <stdint.h>
 
-template <class T>
+template <typename T>
 class bitreader
 {
 public:
@@ -15,8 +14,8 @@ public:
 	void open(char* filename);
 	void reset();
 
-	int read(unsigned int length);
-	void seek(unsigned int position);
+	size_t read(T* buffer, size_t length);
+	void seek(long int offset, int origin);
 
 private:
 	FILE* ptr;
@@ -24,7 +23,6 @@ private:
 	long int fileSize;
 	T currentChunk;
 
-	int is_big_endian(void);
 	T read_single(unsigned int length);
 
 };

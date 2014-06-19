@@ -1,15 +1,16 @@
 #include "bitreader.h"
+#include "../tools/utils.h"
 
 using namespace std;
 
-template <class T>
+template <typename T>
 void bitreader<T>::open(char* filename)
 {
 	if(is_big_endian())
 		cout << "Running on a Big Endian machine!" << endl;
 	else
 		cout << "Running on a Little Endian machine!" << endl;
-	
+
 	ptr = fopen(filename, "r");
 	fseek(ptr, 0, SEEK_END);
 	fileSize = ftell(ptr);
@@ -18,13 +19,30 @@ void bitreader<T>::open(char* filename)
 }
 
 // This is basically a wrapper for the read_single function
-template <class T>
-int bitreader<T>::read(unsigned int length)
+template <typename T>
+size_t bitreader<T>::read(T* buffer, size_t length)
 {
-	int elementsRequested = (sizeof(T) * 8) / length;
+	if( (int)length < 0 )
+	{
+		cout << "Error: Cannot read negative length!" << endl;
+		length = 0;
+	}
+	float elementsFloat = (float)length / (float)(sizeof(T) * 8);
+	int elementsRequested = posIntCeil(elementsFloat);
+	size_t bitsRemaining = length;
+	cout << "Requested " << dec << elementsRequested << " elements" << endl;
+	for (int ii = 0; ii < elementsRequested; ii++)
+	{
+		size_t nextReadLength = (bitsRemaining > sizeof(T) * 8) ?
+			(sizeof(T) * 8) : bitsRemaining;
+		T retSingle = read_single (nextReadLength);
+		buffer[ii] = retSingle;
+		bitsRemaining = bitsRemaining - nextReadLength;
+	}
+	return elementsRequested;
 }
 
-template <class T>
+template <typename T>
 void bitreader<T>::reset()
 {
 	bitOffset = 0;
@@ -32,37 +50,43 @@ void bitreader<T>::reset()
 }
 
 
-template <class T>
-void bitreader<T>::seek(unsigned int position)
+template <typename T>
+void bitreader<T>::seek(long int offset, int origin)
 {
+	long int newBitPos;
+	if(origin == SEEK_CUR)
+		newBitPos = (ftell(ptr) * 8) - (sizeof(T) * 8) + bitOffset + offset;
+	else if(origin == SEEK_SET)
+		newBitPos = offset;
+	else if(origin == SEEK_END)
+		newBitPos = (fileSize * 8) + offset;
+	else
+	{
+		cout << "Error: Seek given an invalid origin parameter." << endl;
+		return;
+	}
 
-}
+	bitOffset = newBitPos % 8;
+	long int newByteIndex = newBitPos / 8;
 
-template <class T>
-int bitreader<T>::is_big_endian(void)
-{
-    union {
-        uint32_t i;
-        char c[4];
-    } bint = {0x01020304};
-
-    return bint.c[0] == 1; 
+	fseek(ptr, newByteIndex, SEEK_SET);
+	fread(&currentChunk, sizeof(T), 1, ptr);
 }
 
 //Read bits into the buffer. Length is the desired number of bits.
 //Right now limit the buffer to one T.
-template <class T>
+template <typename T>
 T bitreader<T>::read_single(unsigned int length)
 {
 	T retChunk = currentChunk;
 	unsigned int numBits = sizeof(T) * 8;
-	
+
 	if(length > numBits)
 	{
 		cout << "Tried to read too many bits!" << endl;
 		return 0;
 	}
-	
+
 	if((bitOffset + length) <= numBits)
 	//Only operate on the current chunk of data
 	{
@@ -79,10 +103,9 @@ T bitreader<T>::read_single(unsigned int length)
 		unsigned short bitsRemaining = length - (numBits - bitOffset);
 		retChunk = retChunk << bitsRemaining;
 		fread(&currentChunk, sizeof(T), 1, ptr);
-		tmpLower = currentChunk >> numBits - bitsRemaining;
+		tmpLower = currentChunk >> (numBits - bitsRemaining);
 		retChunk = retChunk + tmpLower;
-		//cout << hex << retChunk << dec << endl;
-	} 
+	}
 
 	//Now apply the bit mask
 	T bitmask = (1 << length) - 1;
@@ -90,7 +113,5 @@ T bitreader<T>::read_single(unsigned int length)
 
 	//Update the bit offset
 	bitOffset = (bitOffset + length) % numBits;
-	//cout << "New Offset: " << dec << bitOffset << endl;
 	return retChunk;
 }
-
