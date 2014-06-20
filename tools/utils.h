@@ -1,3 +1,5 @@
+#pragma once
+
 using namespace std;
 
 int is_big_endian(void)

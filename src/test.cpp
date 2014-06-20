@@ -9,7 +9,7 @@ int main()
 {
 	char filename[] = "../inputs/testfile.bin";
 	bitreader<char> reader;
-	reader.open(filename);
+	reader.open(filename, "r");
 	char* returnBuffer = (char*)malloc(8 * sizeof(char));
 	for (int ii = 0; ii < 8; ii++)
 	{

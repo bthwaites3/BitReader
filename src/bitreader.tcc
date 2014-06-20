@@ -4,14 +4,18 @@
 using namespace std;
 
 template <typename T>
-void bitreader<T>::open(char* filename)
+bitreader<T>::bitreader() : bitOffset(0)
 {
 	if(is_big_endian())
 		cout << "Running on a Big Endian machine!" << endl;
 	else
 		cout << "Running on a Little Endian machine!" << endl;
+}
 
-	ptr = fopen(filename, "r");
+template <typename T>
+void bitreader<T>::open(const char* filename, const char* mode)
+{
+	ptr = fopen(filename, mode);
 	fseek(ptr, 0, SEEK_END);
 	fileSize = ftell(ptr);
 	fseek(ptr, 0, SEEK_SET);
@@ -73,8 +77,17 @@ void bitreader<T>::seek(long int offset, int origin)
 	fread(&currentChunk, sizeof(T), 1, ptr);
 }
 
+size_t fwrite(T* buffer, size_t length)
+{
+
+}
+
+
+/******************************************************************************/
+/* Private Methods
+/******************************************************************************/
+
 //Read bits into the buffer. Length is the desired number of bits.
-//Right now limit the buffer to one T.
 template <typename T>
 T bitreader<T>::read_single(unsigned int length)
 {

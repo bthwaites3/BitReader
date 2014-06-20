@@ -8,14 +8,14 @@ template <typename T>
 class bitreader
 {
 public:
-	bitreader() : bitOffset(0){}
+	bitreader();
 	~bitreader(){}
 
-	void open(char* filename);
+	void open(const char* filename, const char* mode);
 	void reset();
-
-	size_t read(T* buffer, size_t length);
 	void seek(long int offset, int origin);
+	size_t read(T* buffer, size_t length);
+	size_t fwrite(T* buffer, size_t length);
 
 private:
 	FILE* ptr;
